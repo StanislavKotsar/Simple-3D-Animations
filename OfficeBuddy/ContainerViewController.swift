@@ -60,12 +60,13 @@ class ContainerViewController: UIViewController {
         addChild(menuViewController)
         view.addSubview(menuViewController.view)
         menuViewController.didMove(toParent: self)
-        
+        menuViewController.view.layer.anchorPoint.x = 1.0
         menuViewController.view.frame = CGRect(x: -menuWidth, y: 0, width: menuWidth, height: view.frame.height)
         (menuViewController as! SideMenuViewController).headerHeight = centerViewController.navigationBar.frame.size.height
         
         let panGesture = UIPanGestureRecognizer(target:self, action:#selector(ContainerViewController.handleGesture(_:)))
         view.addGestureRecognizer(panGesture)
+        setMenu(toPercent: 0.0)
     }
     
     @objc func handleGesture(_ recognizer: UIPanGestureRecognizer) {
@@ -79,6 +80,10 @@ class ContainerViewController: UIViewController {
         case .began:
             let isOpen = floor(centerViewController.view.frame.origin.x/menuWidth)
             isOpening = isOpen == 1.0 ? false: true
+            // Improve the look of the opening menu
+            menuViewController.view.layer.shouldRasterize = true
+            menuViewController.view.layer.rasterizationScale =
+              UIScreen.main.scale
             
         case .changed:
             setMenu(toPercent: isOpening ? progress: (1.0 - progress))
@@ -99,7 +104,7 @@ class ContainerViewController: UIViewController {
                             self.setMenu(toPercent: targetProgress)
             },
                            completion: {_ in
-                            
+                            self.menuViewController.view.layer.shouldRasterize = false
             }
             )
             
@@ -124,6 +129,7 @@ class ContainerViewController: UIViewController {
     func setMenu(toPercent percent: CGFloat) {
         centerViewController.view.frame.origin.x = menuWidth * CGFloat(percent)
         menuViewController.view.layer.transform = menuTransform(percent: percent)
+        menuViewController.view.alpha = CGFloat(max(0.2, percent))
     }
     
     func menuTransform(percent: CGFloat) -> CATransform3D {
